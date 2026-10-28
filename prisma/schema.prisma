@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  phone String
+  email String @unique
+  password String?
+  role Role @default(user)
+  status User_status @default(active)
+  isDeleted Boolean @default(false)
+  verification Verification[]
+  address Address[]
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+
+}
+model Verification{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  email String
+  otp String
+  userId String @db.ObjectId
+  user User @relation(fields: [email], references: [email])
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model Address {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  user User @relation(fields: [userId], references: [id])
+  addressType String 
+  addressLine1 String
+  addressLine2 String?
+  street String
+  city String
+  country String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+
+}
+
+model Category{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  description String
+  image String
+  isDeleted Boolean @default(false)
+  product Product []
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([name])
+}
+model Brand{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  description String
+  image String
+  status Brand_status @default(active)
+  isDeleted Boolean @default(false)
+  product Product []
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([name])
+}
+model Product {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  description String
+  shortDescription String
+  categoryId String @db.ObjectId
+  brandId String @db.ObjectId
+  category Category @relation(fields: [categoryId], references: [id])
+  brand Brand @relation(fields: [brandId], references: [id])
+  price Float
+  discoount Float
+  quantity Int
+  sale Sale_status @default(active)
+  productOption productOption[]
+  productImage Image[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+model Attribute{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+  isDeleted Boolean @default(false)
+  productOption productOption[]
+  attributeValue AttributeValue[]
+}
+model AttributeValue{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  attributeId String @db.ObjectId
+  value String
+  attribute Attribute @relation(fields: [attributeId], references: [id])
+  productOptionValue ProductOptionValue[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([attributeId])
+}
+model productOption{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  productId String @db.ObjectId
+  attributeId String @db.ObjectId
+  attribute Attribute @relation(fields: [attributeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  productOptionValue ProductOptionValue[]
+  @@index([productId])
+  @@index([attributeId])
+}
+model ProductOptionValue{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  productOptionId String @db.ObjectId
+  attributeValueId String @db.ObjectId
+  productOption productOption @relation(fields: [productOptionId], references: [id])
+  attributeValue AttributeValue @relation(fields: [attributeValueId], references: [id])
+
+  @@index([productOptionId])
+  @@index([attributeValueId])
+} 
+
+model Image{
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  ProductId String @db.ObjectId
+  product Product @relation(fields: [ProductId], references: [id])
+  url String
+  @@index([ProductId])
+}
+
+enum Role {
+  user
+  admin
+  sub_admiin
+  super_admin
+}
+enum User_status{
+  active 
+  inactive
+}
+enum Brand_status{
+  active 
+  inactive
+}
+enum Sale_status{
+  active
+  inactive
+}
