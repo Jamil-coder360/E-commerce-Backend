@@ -2,13 +2,13 @@ import httpStatus from "http-status";
 import moment from "moment";
 import path from "path";
 import fs from "fs";
-// import prisma from 'utils/prisma.js';
-// import { generateOtp } from 'utils/otpGenerator.js';
-import { sendEmail } from "utils/mailSender.js";
+import {sendMail}  from "../../utils/mailsender";
 import jwt, { type JwtPayload } from "jsonwebtoken";
-import config from "config/index.js";
 import AppError from "../../middleware/apperror";
+import { generateOTP } from "../../utils/otpGenarator";
+import config from "../../config";
 import prisma from "../../config/prisma";
+// import verify from "../../../public/view/verification.html";
 
 const resendOtp = async (payload: { email: string }) => {
   try {
@@ -24,7 +24,7 @@ const resendOtp = async (payload: { email: string }) => {
         "you are not registered with this mail",
       );
 
-    const otp = generateOtp();
+    const otp = generateOTP();
     const expiresAt = moment().utc().add(3, "minute");
 
     const updateOtp = await prisma.verification.upsert({
@@ -56,7 +56,7 @@ const resendOtp = async (payload: { email: string }) => {
       email: user.email,
     };
 
-    const token = jwt.sign(otpPayload, config.jwt_secret as string, {
+    const token = jwt.sign(otpPayload,config.jwt_secret as string, {
       expiresIn: "3m",
     });
 
@@ -65,11 +65,12 @@ const resendOtp = async (payload: { email: string }) => {
       "../../../public/view/verification.html",
     );
 
-    await sendEmail(
+    await sendMail(
+      
       user?.email,
       "Your One Time OTP",
-      fs
-        .readFileSync(otpEmailPath, "utf8")
+     fs
+        .readFileSync(otpEmailPath, 'utf8')
         .replace("{{otp}}", otp)
         .replace("{{email}}", user?.email),
     );
